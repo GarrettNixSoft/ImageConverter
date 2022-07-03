@@ -1,3 +1,4 @@
+package ImageMerger;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -109,7 +110,7 @@ public class ImageMerger {
 
         // perform merge
         BufferedImage result = switch (mode) {
-            case 0 -> mergeImagesKeepBrightest(image1, image2, destStr);
+            case 0 -> mergeImagesKeepBrightest(image1, image2);
             default -> null;
         };
 
@@ -127,7 +128,7 @@ public class ImageMerger {
 
     }
 
-    private static BufferedImage mergeImagesKeepBrightest(BufferedImage image1, BufferedImage image2, String destStr) {
+    private static BufferedImage mergeImagesKeepBrightest(BufferedImage image1, BufferedImage image2) {
         // create result image
         BufferedImage result = new BufferedImage(image1.getWidth(), image1.getHeight(), BufferedImage.TYPE_INT_ARGB);
         // merge
