@@ -1,4 +1,5 @@
-package ImageMerger;
+import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -6,33 +7,44 @@ import java.nio.file.Paths;
 
 import javax.imageio.ImageIO;
 
-import java.awt.image.BufferedImage;
-
-public class ImageMerger {
+public class ImageConverter {
 
     public static void main(String[] args) {
         
         if (args.length < 1) {
-            System.out.println("Usage: <file 1> <file 2> <dest file> <merge mode>");
+            System.out.println("Usage: [-help] [-m] [-merge] [-s] [-split] [<args>]");
             System.exit(0);
         }
 
         else if (args[0].contains("-help")) {
-            System.out.println("Usage: <file 1> <file 2> <dest file> <merge mode>");
+            System.out.println("Usage: [-help] [-m] [-merge] [-s] [-split] [<args>]\n");
+            System.out.println("Merge: [-m] or [-merge] -- merge two images");
+            System.out.println("Args: <image 1> <image 2> <mode>");
             System.out.println("Modes:");
             System.out.println("\t0: keep brightest");
+            System.out.println("\n");
+            System.out.println("Split: [-s] or [-split]");
+            System.out.println("Args: <image> <slice width> <slice height>");
             System.exit(0);
         }
 
-        else if (args.length < 4 || args.length > 4) {
-            System.out.println("Usage: <file 1> <file 2> <dest file> <merge mode>");
-            System.exit(0);
+        String command = args[0].toLowerCase().trim();
+
+        if (command.equals("-m") || command.equals("-merge")) {
+            mergeImages(args);
+        }
+        else if (command.equals("-s") || command.equals("-split")) {
+            splitImage(args);
         }
 
-        String path1Str = args[0];
-        String path2Str = args[1];
-        String destStr = args[2];
-        String modeStr = args[3];
+    }
+
+    private static void mergeImages(String[] args) {
+        
+        String path1Str = args[1];
+        String path2Str = args[2];
+        String destStr = args[3];
+        String modeStr = args[4];
 
         // parse mode
         int mode = -1;
@@ -153,4 +165,89 @@ public class ImageMerger {
         return result;
     }
 
+    private static void splitImage(String[] args) {
+        
+        // organize the args
+        String imagePath = args[1];
+        String widthStr = args[2];
+        String heightStr = args[3];
+
+        // fetch the image file
+        Path path = Paths.get(imagePath);
+        File file = path.toFile();
+
+        if (!file.exists()) {
+            System.err.println("Error: " + file.getName() + " does not exist.");
+            System.out.println("(Full path: " + file.getAbsolutePath() + ")");
+            System.exit(-1);
+        }
+
+        // parse the integers
+        int width = 0;
+        int height = 0;
+        try {
+            width = Integer.parseInt(widthStr);
+            height = Integer.parseInt(heightStr);
+        } catch (NumberFormatException e) {
+            System.err.println("Error parsing dimensions: please enter valid integers only.");
+            System.exit(-1);
+        }
+
+        // load the image to split
+        BufferedImage image = null;
+
+        try {
+            image = ImageIO.read(file);
+        } catch (IOException e) {
+            System.err.println("Error loading image: " + e.getMessage());
+            System.exit(-1);
+        }
+
+        // check that the dimensions are correct
+        if (image.getWidth() % width != 0) {
+            System.err.println("Error: split width does not evenly divide image width (" + image.getWidth() + " / " + width + ")");
+            System.exit(-1);
+        }
+        else if (image.getHeight() % height != 0) {
+            System.err.println("Error: split height does not evenly divide image height (" + image.getHeight() + " / " + height + ")");
+            System.exit(-1);
+        }
+
+        // prepare an array of subimages
+        int rows = image.getHeight() / height;
+        int cols = image.getWidth() / width;
+        BufferedImage[][] subimages = new BufferedImage[rows][cols];
+
+        System.out.println("Splitting into " + rows + " rows and " + cols + " columns.");
+
+        // split the image
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                int x = c * width;
+                int y = r * height;
+                subimages[r][c] = image.getSubimage(x, y, width, height);
+            }
+        }
+
+        // determine the name pattern for the result files
+        String subimageBaseName = file.getAbsolutePath();
+        subimageBaseName = subimageBaseName.substring(0, subimageBaseName.lastIndexOf('.'));
+
+        // save all subimages to files
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                String subimageFileName = subimageBaseName + "_" + r + "_" + c + ".png";
+                File dest = new File(subimageFileName);
+                try {
+                    ImageIO.write(subimages[r][c], "png", dest);
+                } catch (IOException e) {
+                    System.err.println("Error saving subimage: " + e.getMessage());
+                }
+            }
+        }
+
+        // done
+        System.out.println("Success!");
+
+    }
 }
