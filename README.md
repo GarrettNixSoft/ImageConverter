@@ -1,4 +1,4 @@
-# ImageComverter
+# ImageConverter
 Simple command line tool for merging images
 
 Arguments:
