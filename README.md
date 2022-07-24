@@ -1,12 +1,10 @@
 # ImageConverter
 Simple command line tool for merging images
 
-Arguments:
+Options:
 
-file 1 -- the first image to merge
+Merge -- merge two images
 
-file 2 -- the second image to merge
+Split -- split an image into subimages
 
-dest file -- a non-existent file to create for the result
-
-mode -- the merging mode to use
+Tile -- combine images into a tilemap
