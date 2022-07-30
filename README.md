@@ -1,5 +1,5 @@
 # ImageConverter
-Simple command line tool for merging images
+Simple command line tool for working with images.
 
 Options:
 
